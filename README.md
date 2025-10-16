@@ -8,6 +8,7 @@ A fast, simple terminal tool to highlight specific words in your command output 
 
 - Automatic color assignment from a preset palette
 - Custom hex colors for specific words
+- Optiona discreet sound on match
 - Case-insensitive matching by default
 - Whole word extension mode
 - Fast and efficient - designed for real-time log tailing
