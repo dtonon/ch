@@ -162,6 +162,32 @@ go build -o ch
 sudo mv ch /usr/local/bin/
 ```
 
+## Buffering issues
+
+Some programs detect when their output is being piped and switch from line buffering to full buffering for performance. This means output may not appear in real-time when using `ch`. If you experience delayed highlighting or no output until the program completes, you need to force line buffering using one of these methods:
+
+### macOS
+```bash
+# Use script (built-in)
+script -q /dev/null your-command | ch your-words
+
+# Or install and use unbuffer
+brew install expect
+unbuffer your-command | ch your-words
+```
+
+### Linux
+```bash
+# Use stdbuf (usually built-in)
+stdbuf -oL your-command | ch your-words
+
+# Or use script
+script -qfc "your-command" /dev/null | ch your-words
+
+# Or install and use unbuffer
+unbuffer your-command | ch your-words
+```
+
 ## Performance
 
 `ch` uses buffered I/O and processes input line by line, making it efficient for:
