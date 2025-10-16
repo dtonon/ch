@@ -22,6 +22,9 @@ A fast, simple terminal tool to highlight specific words in your command output 
 3. Handles overlapping matches (first match wins)
 4. Outputs to standard output with ANSI color codes
 
+The preset colors use a pastel palette optimized for readability on both light and dark terminals: Red, Green, Orange, Blue, Pink, Purple.  
+Colors cycle when you have more than 6 words without custom colors.
+
 The tool is optimized for streaming, making it ideal for real-time log monitoring.
 
 ## Usage
@@ -79,19 +82,6 @@ tail -f app.log | ch -b error warning success
 # Mix with custom colors
 tail -f app.log | ch -b error::red warning::orange info::blue
 ```
-
-### Color palette
-
-The preset colors use a pastel palette optimized for readability on both light and dark terminals:
-
-1. Red
-2. Green
-3. Orange
-4. Blue
-5. Pink
-6. Purple
-
-Colors cycle when you have more than 6 words without custom colors.
 
 ## Examples
 
