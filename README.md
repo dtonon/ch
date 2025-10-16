@@ -14,6 +14,14 @@ A fast, simple terminal tool to highlight specific words in your command output 
 - Fast and efficient - designed for real-time log tailing
 - Cross-platform - works on macOS and Linux
 
+## Installation
+
+If you have go installed, run:
+
+```shell
+go install github.com/dtonon/ch@latest
+```
+
 ## How It Works
 
 `ch` reads from standard input line by line and:
