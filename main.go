@@ -6,15 +6,17 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 )
 
 // ANSI color codes
 const (
 	Reset = "\033[0m"
+	Bell  = "\a"
 )
 
 type namedColor struct {
-	name string
+	name    string
 	r, g, b int
 }
 
@@ -36,9 +38,9 @@ func rgbToANSI(r, g, b int, background bool) string {
 }
 
 type wordConfig struct {
-	original string
-	search   string // lowercase version for case-insensitive search
-	color    string
+	original   string
+	search     string // lowercase version for case-insensitive search
+	color      string
 	background bool
 }
 
@@ -108,9 +110,9 @@ func parseArgs(args []string, caseSensitive bool, background bool) []wordConfig 
 		}
 
 		configs = append(configs, wordConfig{
-			original: word,
-			search:   search,
-			color:    color,
+			original:   word,
+			search:     search,
+			color:      color,
 			background: background,
 		})
 	}
@@ -131,9 +133,9 @@ func getNextAvailableColor(usedColors map[int]bool, background bool) string {
 	return rgbToANSI(namedColors[0].r, namedColors[0].g, namedColors[0].b, background)
 }
 
-func highlightLine(line string, configs []wordConfig, caseSensitive, wholeWord bool) string {
+func highlightLine(line string, configs []wordConfig, caseSensitive, wholeWord bool) (string, bool) {
 	if len(configs) == 0 {
-		return line
+		return line, false
 	}
 
 	searchLine := line
@@ -151,6 +153,9 @@ func highlightLine(line string, configs []wordConfig, caseSensitive, wholeWord b
 		text  string
 	}
 	var replacements []replacement
+
+	// Track if we found any matches
+	foundMatch := false
 
 	// Find all matches
 	for _, cfg := range configs {
@@ -200,6 +205,8 @@ func highlightLine(line string, configs []wordConfig, caseSensitive, wholeWord b
 					end:   endIdx,
 					text:  coloredText,
 				})
+
+				foundMatch = true
 			}
 
 			pos = idx + 1
@@ -208,7 +215,7 @@ func highlightLine(line string, configs []wordConfig, caseSensitive, wholeWord b
 
 	// If no matches, return original line
 	if len(replacements) == 0 {
-		return line
+		return line, false
 	}
 
 	// Sort replacements by start position (they should already be mostly sorted)
@@ -232,13 +239,14 @@ func highlightLine(line string, configs []wordConfig, caseSensitive, wholeWord b
 	}
 	result.WriteString(line[lastPos:])
 
-	return result.String()
+	return result.String(), foundMatch
 }
 
 func main() {
 	caseSensitive := flag.Bool("s", false, "case-sensitive matching")
 	wholeWord := flag.Bool("w", false, "extend match to whole word (until space or EOL)")
 	background := flag.Bool("b", false, "use background colors instead of foreground")
+	alert := flag.Bool("a", false, "beep on match (at most once every 5 seconds)")
 	flag.Parse()
 
 	args := flag.Args()
@@ -248,21 +256,35 @@ func main() {
 		fmt.Fprintf(os.Stderr, "  -s    case-sensitive matching (default: case-insensitive)\n")
 		fmt.Fprintf(os.Stderr, "  -w    extend match to whole word\n")
 		fmt.Fprintf(os.Stderr, "  -b    use background colors instead of foreground\n")
+		fmt.Fprintf(os.Stderr, "  -a    beep on match (at most once every 5 seconds)\n")
 		fmt.Fprintf(os.Stderr, "\nColors:\n")
 		fmt.Fprintf(os.Stderr, "  Named: red, green, orange, blue, pink, purple\n")
 		fmt.Fprintf(os.Stderr, "  Hex: any 6-digit hex color (e.g., FF5500)\n")
 		fmt.Fprintf(os.Stderr, "\nExample:\n")
 		fmt.Fprintf(os.Stderr, "  tail -f app.log | ch error::red warning::orange success::green\n")
+		fmt.Fprintf(os.Stderr, "  tail -f app.log | ch -a error warning  # beep on errors/warnings\n")
 		os.Exit(1)
 	}
 
 	configs := parseArgs(args, *caseSensitive, *background)
 
+	// Track last beep time for rate limiting
+	var lastBeepTime time.Time
 	// Read from stdin line by line
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
 		line := scanner.Text()
-		highlighted := highlightLine(line, configs, *caseSensitive, *wholeWord)
+		highlighted, foundMatch := highlightLine(line, configs, *caseSensitive, *wholeWord)
+
+		// Beep if alert flag is set, match was found, and enough time has passed
+		if *alert && foundMatch {
+			now := time.Now()
+			if now.Sub(lastBeepTime) >= 5*time.Second {
+				fmt.Print(Bell)
+				lastBeepTime = now
+			}
+		}
+
 		fmt.Println(highlighted)
 	}
 

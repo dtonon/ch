@@ -52,6 +52,7 @@ Available named colors: `red`, `green`, `orange`, `blue`, `pink`, `purple`
 - `-s` - Case-sensitive matching (default is case-insensitive)
 - `-w` - Whole word extension - extends match until space or end of line
 - `-b` - Use background colors instead of foreground colors
+- `-a` - Play a discreet beep when a match is found
 
 #### Case-sensitive matching
 
@@ -81,6 +82,20 @@ tail -f app.log | ch -b error warning success
 
 # Mix with custom colors
 tail -f app.log | ch -b error::red warning::orange info::blue
+```
+
+#### Audible alert
+
+The `-a` flag plays a discreet beep when a match is found; the alert is not even if matches are frequent (max one every 5 seconds):
+
+```bash
+# Play a beep
+tail -f app.log | ch -a panic::red
+```
+
+```bash
+# Test repeated match heads with a one-second interval
+for i in {1..10}; do echo "line $i"; sleep 1; echo "error occurred"; sleep 1; done | ch -a error
 ```
 
 ## Examples
